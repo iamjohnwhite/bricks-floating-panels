@@ -2,9 +2,9 @@
 Contributors: truemtn
 Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.8.4
+Stable tag: 1.8.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,8 +55,8 @@ No. The builder returns to its normal docked panels.
 
 == Changelog ==
 
-= 1.8.4 =
-* Test release to verify automatic update delivery to WordPress sites.
+= 1.8.5 =
+* Confirmed compatibility with WordPress 7.0 and verified automatic update delivery to WordPress sites.
 
 = 1.8.3 =
 * Renamed the plugin to "BFP Bricks Floating Panels" for clearer identification in the Plugins list.
