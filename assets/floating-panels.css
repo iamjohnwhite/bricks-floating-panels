@@ -8,10 +8,75 @@
    and toolbar controls.
    ========================================================================== */
 
-/* Remove the 48px top margin Bricks/AT puts on the docked Structure panel,
-   which leaves a white gap above it. (When floating, the injected #bricks-structure
-   rule sets margin:0 anyway, so this only affects the docked state.) */
-#bricks-structure { margin-top: 0 !important; }
+/* --- Toolbar stack toggle ------------------------------------------------- */
+
+#bfp-stack-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	margin-left: 4px;
+	padding: 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: #8b93a0;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+#bfp-stack-toggle:hover { background: rgba(255, 255, 255, 0.09); color: #fff; }
+#bfp-stack-toggle.bfp-on { color: #4f9cf5; background: rgba(79, 156, 245, 0.16); }
+
+/* --- Transparency droplet (in floating panel title bar) ------------------- */
+
+.bfp-dragbar .bfp-droplet {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	margin-left: 4px;
+	padding: 0;
+	border: 0;
+	border-radius: 5px;
+	background: rgba(255, 255, 255, 0.1);
+	color: #cbd2dc;
+	cursor: pointer;
+}
+
+.bfp-dragbar .bfp-droplet:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.bfp-dragbar .bfp-droplet.bfp-on { color: #fff; background: #2bb6cc; }
+
+/* --- Tabbed side-dock switcher -------------------------------------------- */
+
+#bfp-stack-tabs {
+	display: none;
+	position: fixed;
+	z-index: 100001;
+	height: 28px;
+	gap: 3px;
+	padding: 3px;
+	border-radius: 8px 8px 0 0;
+	background: #20242b;
+	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+#bfp-stack-tabs button {
+	flex: 1;
+	border: 0;
+	border-radius: 5px;
+	background: transparent;
+	color: #aeb6c2;
+	font: inherit;
+	font-size: 11px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+#bfp-stack-tabs button:hover { background: rgba(255, 255, 255, 0.09); color: #fff; }
+#bfp-stack-tabs button.bfp-on { background: #c2c8d0; color: #1f2329; }
 
 /* --- Toolbar controls (3-state segmented selector per panel) -------------- */
 

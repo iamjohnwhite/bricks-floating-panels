@@ -5,7 +5,7 @@ floating overlays so they stop squeezing the canvas, with a Beaver-Builder-style
 feel. Loads only inside the Bricks builder and never touches the front end.
 
 - **Author:** John White
-- **Current version:** 1.8.6
+- **Current version:** 2.0.4
 - **Requires:** WordPress 5.8+, PHP 7.4+, Bricks (active)
 
 ## What it does

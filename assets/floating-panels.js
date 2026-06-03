@@ -54,6 +54,35 @@
 
 	var SETTINGS_PANEL = PANELS[0];
 	var settings = window.BFP_SETTINGS || { defaultActive: false };
+	// 2.0 dashboard options (all default off if not provided).
+	var OPT = (settings && settings.options) || {};
+	var stackTab = 'bricks-panel'; // active panel id when side-docking is "tabbed"
+
+	// Transparency is gated entirely on the dashboard setting. If it's off there,
+	// it's off everywhere (the per-session toggle is ignored). If on, it defaults
+	// on and the droplet can flip it per browser.
+	var transparencyOn = false;
+	if (OPT.transparency) {
+		transparencyOn = true;
+		try {
+			var ls = localStorage.getItem('bfp_transparency');
+			if (ls === '0') { transparencyOn = false; }
+			else if (ls === '1') { transparencyOn = true; }
+		} catch (e) {}
+	}
+
+	// Stacking is gated on the dashboard setting; activatable live, persisted.
+	var stackActive = false;
+	if (OPT.stack) {
+		stackActive = true;
+		try {
+			var ss = localStorage.getItem('bfp_stack');
+			if (ss === '0') { stackActive = false; }
+			else if (ss === '1') { stackActive = true; }
+		} catch (e) {}
+	}
+	function stackOn() { return !!OPT.stack && stackActive; }
+	function isStacked(p) { return stackOn() && modeOf(p) !== 'hidden'; }
 
 	var EASE_OUT = 'cubic-bezier(.16,.84,.34,1)';
 	var EASE_IN  = 'cubic-bezier(.4,0,.7,.2)';
@@ -163,6 +192,29 @@
 	/* ------------------------------------------- injected geometry stylesheet */
 
 	var styleTag;
+	// Resolve a panel's on-screen rect: its free-float position normally, or a
+	// stacked / tabbed slot on one side when side-docking is enabled.
+	function panelGeo(p) {
+		var d = ensureDesired(p);
+		if (!isStacked(p)) {
+			return { left: d.left, top: d.top, width: d.width, height: d.height, hidden: false };
+		}
+		var ww = window.innerWidth, wh = window.innerHeight, top0 = 58, gap = 8, pad = 8, W = 340;
+		var x = (OPT.stack_side === 'left') ? pad : (ww - W - pad);
+		if (OPT.stack_layout === 'tabbed') {
+			var tabsH = 32;
+			return { left: x, top: top0 + tabsH, width: W,
+				height: Math.max(200, wh - top0 - tabsH - pad), hidden: (stackTab !== p.id) };
+		}
+		// Stacked: split the side's height across the visible panels.
+		var fp = PANELS.filter(function (pp) { return effMode(pp) !== 'hidden'; });
+		var n = fp.length || 1;
+		var idx = Math.max(0, fp.indexOf(p));
+		var totalH = wh - top0 - pad;
+		var each = Math.floor((totalH - gap * (n - 1)) / n);
+		return { left: x, top: top0 + idx * (each + gap), width: W, height: each, hidden: false };
+	}
+
 	function renderStyles() {
 		if (!styleTag) {
 			styleTag = document.createElement('style');
@@ -172,10 +224,11 @@
 		var css = '';
 		PANELS.forEach(function (p) {
 			var mode = effMode(p);
-			if (mode === 'dock') { return; }
-			var d = ensureDesired(p);
-			css += '#' + p.id + '{position:fixed!important;left:' + d.left + 'px!important;top:' + d.top +
-				'px!important;width:' + d.width + 'px!important;height:' + d.height +
+			// Native dock is left to Bricks, unless stacking is overriding it.
+			if (mode === 'dock' && !isStacked(p)) { return; }
+			var g = panelGeo(p);
+			css += '#' + p.id + '{position:fixed!important;left:' + g.left + 'px!important;top:' + g.top +
+				'px!important;width:' + g.width + 'px!important;height:' + g.height +
 				'px!important;right:auto!important;bottom:auto!important;margin:0!important;' +
 				'z-index:' + zFor(p) + '!important;max-height:none!important;overflow:hidden!important;' +
 				'resize:none!important;' +
@@ -189,29 +242,32 @@
 			css += '#' + p.id + '::-webkit-scrollbar,#' + p.id + ' *::-webkit-scrollbar{width:10px!important;height:10px!important;}';
 			css += '#' + p.id + '::-webkit-scrollbar-thumb,#' + p.id + ' *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)!important;border-radius:6px!important;}';
 			css += '#' + p.id + '::-webkit-scrollbar-track,#' + p.id + ' *::-webkit-scrollbar-track{background:rgba(0,0,0,.2)!important;}';
-			// Settings panel (floating): pin Bricks' element quick-access toolbar
-			// to the panel's left edge so it rides along, mirroring the docked
-			// look. Bricks' native content margin then sits content beside it, so
-			// we no longer override the margin.
-			if (p.id === 'bricks-panel' && mode === 'float') {
-				var qaTop = d.top + DRAGBAR_H;
-				var qaH = Math.max(0, d.height - DRAGBAR_H);
+			// Settings panel (floating, visible): pin Bricks' element quick-access
+			// toolbar to the panel's left edge so it rides along.
+			if (p.id === 'bricks-panel' && !g.hidden && (mode === 'float' || isStacked(p))) {
+				var qaTop = g.top + DRAGBAR_H;
+				var qaH = Math.max(0, g.height - DRAGBAR_H);
 				var qaW = getQAWidth();
-				// Pin the quick-access bar to the panel's left edge. transform:none
-				// undoes Bricks' "collapsed = shoved off-screen" trick so a panel
-				// that was collapsed before floating still shows correctly.
-				css += '#' + QUICK_ACCESS_ID + '{position:fixed!important;left:' + d.left +
+				css += '#' + QUICK_ACCESS_ID + '{position:fixed!important;left:' + g.left +
 					'px!important;top:' + qaTop + 'px!important;right:auto!important;bottom:auto!important;' +
 					'height:' + qaH + 'px!important;margin:0!important;transform:none!important;' +
 					'transition:none!important;z-index:' + (zFor(p) + 1) +
 					'!important;border-radius:0 0 0 8px!important;}';
-				// Hide the collapse toggle while floating (redundant + conflicts).
 				css += '#' + QUICK_ACCESS_ID + ' .toggle{display:none!important;}';
-				// Keep content clear of the pinned bar regardless of collapsed state.
 				css += '#bricks-panel-element{margin-left:' + qaW + 'px!important;}';
 			}
-			if (mode === 'hidden') { css += '#' + p.id + '{display:none!important;}'; }
+			if (mode === 'hidden' || g.hidden) { css += '#' + p.id + '{display:none!important;}'; }
 		});
+		// Stacking is a LOCKED dock: pad the canvas area on the stack side so the
+		// centered preview reserves a gutter, and cap the wrapper so it can't spill
+		// under the panels.
+		if (stackOn()) {
+			var reserve = 340 + 16; // stack width + padding
+			var prop = (OPT.stack_side === 'left') ? 'padding-left' : 'padding-right';
+			// Dark gutter to match the editor chrome (was light grey).
+			css += '#bricks-preview{' + prop + ':' + reserve + 'px!important;box-sizing:border-box!important;background:#161a1d!important;}';
+			css += '#bricks-builder-iframe-wrapper{max-width:100%!important;}';
+		}
 		styleTag.textContent = css;
 	}
 
@@ -221,6 +277,13 @@
 		var el = panelEl(p);
 		if (!el || animating[p.id]) { return; }
 		renderStyles();
+		// Stacked = a locked arrangement: positioned by renderStyles, no drag chrome
+		// and no tear-off tab.
+		if (isStacked(p)) {
+			removeChrome(el);
+			hideDockGrab(p);
+			return;
+		}
 		if (modeOf(p) === 'float') {
 			addChrome(el, p);
 			hideNativeResizers(p);
@@ -262,7 +325,8 @@
 	function positionDockGrab(p) {
 		var el = panelEl(p);
 		var g = ensureDockGrab(p);
-		if (!el || modeOf(p) !== 'dock') { g.style.display = 'none'; return; }
+		// No tear-off tab in native dock only; stacked panels are locked.
+		if (!el || modeOf(p) !== 'dock' || isStacked(p)) { g.style.display = 'none'; return; }
 		var ro = ensureDockRO();
 		if (ro) { try { ro.observe(el); } catch (err) {} }
 		var r = el.getBoundingClientRect();
@@ -528,6 +592,20 @@
 		});
 		right.appendChild(sizes);
 
+		// Transparency droplet: always shown on float title bars when see-through
+		// is enabled in settings.
+		if (OPT.transparency) {
+			var drop = document.createElement('button');
+			drop.type = 'button';
+			drop.className = 'bfp-droplet';
+			drop.title = 'Toggle panel transparency';
+			drop.innerHTML = dropletIconSVG();
+			if (transparencyOn) { drop.classList.add('bfp-on'); }
+			drop.addEventListener('mousedown', stop);
+			drop.addEventListener('click', function (e) { stop(e); toggleTransparency(); });
+			right.appendChild(drop);
+		}
+
 		var lock = document.createElement('button');
 		lock.type = 'button';
 		lock.className = 'bfp-dragbar-lock';
@@ -657,7 +735,7 @@
 
 	/* ----------------------------------------------------- toolbar buttons */
 
-	var wrap, segs = {};
+	var wrap, segs = {}, stackBtn = null;
 
 	// Three mutually-exclusive state buttons per panel: Locked / Float / Off.
 	var SEG_MODES = [
@@ -706,7 +784,85 @@
 
 			wrap.appendChild(group);
 		});
+
+		// Stack toggle icon (only when side-docking is enabled in settings).
+		if (OPT.stack) {
+			stackBtn = document.createElement('button');
+			stackBtn.type = 'button';
+			stackBtn.id = 'bfp-stack-toggle';
+			stackBtn.title = 'Stack panels on one side';
+			stackBtn.innerHTML = stackIconSVG();
+			stackBtn.addEventListener('click', function (e) { e.stopPropagation(); toggleStack(); });
+			wrap.appendChild(stackBtn);
+		}
 		return wrap;
+	}
+
+	function stackIconSVG() {
+		return '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
+			'<rect x="2.5" y="1.8" width="11" height="4.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+			'<rect x="2.5" y="7.8" width="11" height="4.4" rx="1" fill="currentColor"/></svg>';
+	}
+
+	function toggleStack() {
+		stackActive = !stackActive;
+		try { localStorage.setItem('bfp_stack', stackActive ? '1' : '0'); } catch (e) {}
+		if (stackActive) {
+			// Stacking is a locked arrangement: pull visible panels out of float.
+			PANELS.forEach(function (p) {
+				if (modeOf(p) !== 'hidden') { geomFor(p).mode = 'dock'; geomFor(p).lastShown = 'dock'; }
+			});
+			saveState();
+		}
+		applyAll();
+		updateButtons();
+		// Let Bricks recompute / recenter the canvas for the new gutter.
+		try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+	}
+
+	/* ----------------------------------------------- transparency feature */
+
+	function dropletIconSVG() {
+		return '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
+			'<path d="M8 1.5s5 5.2 5 8.4a5 5 0 0 1-10 0C3 6.7 8 1.5 8 1.5z" fill="currentColor" ' +
+			'stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>';
+	}
+	var transTag;
+	// A panel is visually floating (eligible for transparency) only when it's in
+	// float mode and not part of a stack. Locked/docked/stacked panels stay solid.
+	function isVisuallyFloating(p) { return modeOf(p) === 'float' && !stackOn(); }
+	function transparencyCSS() {
+		if (!transparencyOn) { return ''; }
+		var a = Math.max(0.1, Math.min(1, (OPT.opacity || 80) / 100));
+		var a2 = Math.max(0.1, a - 0.35);
+		var css = '';
+		if (isVisuallyFloating(SETTINGS_PANEL)) {
+			css += '#bricks-panel{background:rgba(22,27,29,' + a + ')!important;}' +
+				'#bricks-panel-header{background:rgba(22,27,29,' + a2 + ')!important;}' +
+				'.bricks-add-element{background:rgba(22,27,29,' + a2 + ')!important;}' +
+				'#bricks-panel-tabs li.active{background:rgba(22,27,29,' + a2 + ')!important;}' +
+				'#bricks-panel-sticky{background:rgba(22,27,29,' + a2 + ')!important;}';
+		}
+		if (isVisuallyFloating(PANELS[1])) {
+			css += '#bricks-structure{background:rgba(22,27,29,' + a + ')!important;}';
+		}
+		return css;
+	}
+	function applyTransparency() {
+		if (!transTag) {
+			transTag = document.createElement('style');
+			transTag.id = 'bfp-transparency';
+			(document.head || document.documentElement).appendChild(transTag);
+		}
+		transTag.textContent = transparencyCSS();
+		Array.prototype.forEach.call(document.querySelectorAll('.bfp-droplet'), function (b) {
+			b.classList.toggle('bfp-on', transparencyOn);
+		});
+	}
+	function toggleTransparency() {
+		transparencyOn = !transparencyOn;
+		try { localStorage.setItem('bfp_transparency', transparencyOn ? '1' : '0'); } catch (e) {}
+		applyTransparency();
 	}
 
 	function mountControls() {
@@ -733,14 +889,20 @@
 	}
 
 	function updateButtons() {
+		var stacked = stackOn();
 		PANELS.forEach(function (p) {
 			var list = segs[p.id];
 			if (!list) { return; }
 			var mode = modeOf(p);
 			list.forEach(function (b) {
 				b.classList.toggle('bfp-seg-on', b.dataset.mode === mode);
+				// Float can't coexist with stacking (stacked panels are locked).
+				var disable = stacked && b.dataset.mode === 'float';
+				b.disabled = disable;
+				b.classList.toggle('bfp-seg-disabled', disable);
 			});
 		});
+		if (stackBtn) { stackBtn.classList.toggle('bfp-on', stacked); }
 	}
 
 	/* ----------------------------------------- auto-open on canvas selection */
@@ -759,11 +921,101 @@
 			if (modeOf(SETTINGS_PANEL) === 'hidden') {
 				setMode(SETTINGS_PANEL, 'float', { auto: true });
 			}
+			if (OPT.avoid_overlap) { avoidElement(e); }
 		} else if (isEmptyTarget(t)) {
 			if (autoOpened[SETTINGS_PANEL.id] && modeOf(SETTINGS_PANEL) === 'float') {
 				setMode(SETTINGS_PANEL, 'hidden');
 			}
 		}
+	}
+
+	// Nudge a covering panel just past the nearest clear edge of the selected
+	// element (least movement), falling back to the farthest edge if it can't
+	// fully clear. Honors which panels the user opted in for.
+	function avoidApplies(p) {
+		var w = OPT.avoid_which || 'both';
+		if (w === 'settings') { return p.id === 'bricks-panel'; }
+		if (w === 'structure') { return p.id === 'bricks-structure'; }
+		return true;
+	}
+	function rectsOverlap(a, b) {
+		return !(a.left >= b.right || a.right <= b.left || a.top >= b.bottom || a.bottom <= b.top);
+	}
+	function avoidElement(e) {
+		if (stackOn()) { return; } // stacked panels have fixed slots
+		var iframe = document.getElementById('bricks-builder-iframe');
+		var el = e.target && e.target.closest ? e.target.closest('[id^="brxe-"], [class*="brxe-"]') : null;
+		if (!iframe || !el) { return; }
+		var io = iframe.getBoundingClientRect();
+		var r = el.getBoundingClientRect();
+		var er = { left: io.left + r.left, top: io.top + r.top, right: io.left + r.right, bottom: io.top + r.bottom };
+		var ww = window.innerWidth, wh = window.innerHeight, GAP = 10, pad = 8;
+
+		// Panels we must not collide with: the element, plus any panel we leave put
+		// or have already repositioned this pass (so two moved panels don't stack).
+		var placed = [];
+		function rectFor(d) { return { left: d.left, top: d.top, right: d.left + d.width, bottom: d.top + d.height }; }
+		function clearOf(rect) {
+			if (rectsOverlap(rect, er)) { return false; }
+			for (var i = 0; i < placed.length; i++) { if (rectsOverlap(rect, placed[i])) { return false; } }
+			return true;
+		}
+
+		PANELS.forEach(function (p) {
+			if (modeOf(p) !== 'float') { return; }
+			var d = ensureDesired(p);
+			var needsMove = avoidApplies(p) && rectsOverlap(rectFor(d), er);
+			if (!needsMove) { placed.push(rectFor(d)); return; }
+
+			var cands = [
+				{ axis: 'x', val: er.left - GAP - d.width },
+				{ axis: 'x', val: er.right + GAP },
+				{ axis: 'y', val: er.top - GAP - d.height },
+				{ axis: 'y', val: er.bottom + GAP }
+			];
+			// Also allow snugging right next to an already-moved panel, so two
+			// panels sit adjacent instead of one getting shoved far away.
+			placed.forEach(function (q) {
+				cands.push({ axis: 'x', val: q.right + GAP });
+				cands.push({ axis: 'x', val: q.left - GAP - d.width });
+				cands.push({ axis: 'y', val: q.bottom + GAP });
+				cands.push({ axis: 'y', val: q.top - GAP - d.height });
+			});
+			function tryVal(axis, val) {
+				var rect = (axis === 'x') ? { left: val, top: d.top, right: val + d.width, bottom: d.top + d.height }
+					: { left: d.left, top: val, right: d.left + d.width, bottom: val + d.height };
+				return rect;
+			}
+			var best = null;
+			cands.forEach(function (c) {
+				var lo = pad, hi = (c.axis === 'x') ? (ww - d.width - pad) : (wh - d.height - pad);
+				if (c.val < lo || c.val > hi) { return; }
+				if (!clearOf(tryVal(c.axis, c.val))) { return; }   // clears element AND placed panels
+				var cur = (c.axis === 'x') ? d.left : d.top;
+				var move = Math.abs(c.val - cur);
+				if (!best || move < best.move) { best = { axis: c.axis, val: c.val, move: move }; }
+			});
+
+			if (best) {
+				if (best.axis === 'x') { d.left = Math.round(best.val); } else { d.top = Math.round(best.val); }
+			} else {
+				// Couldn't fully clear: farthest edge, then stagger off any placed panel.
+				var roomLeft = er.left, roomRight = ww - er.right, roomTop = er.top, roomBottom = wh - er.bottom;
+				var maxRoom = Math.max(roomLeft, roomRight, roomTop, roomBottom);
+				if (maxRoom === roomLeft) { d.left = pad; }
+				else if (maxRoom === roomRight) { d.left = Math.max(pad, ww - d.width - pad); }
+				else if (maxRoom === roomTop) { d.top = pad; }
+				else { d.top = Math.max(pad, wh - d.height - pad); }
+				placed.forEach(function (q) {
+					if (rectsOverlap(rectFor(d), q)) { d.top = clamp(q.bottom + GAP, pad, Math.max(pad, wh - d.height - pad)); }
+				});
+			}
+			d.left = clamp(d.left, 0, Math.max(0, ww - d.width - pad));
+			d.top = clamp(d.top, 0, Math.max(0, wh - d.height - pad));
+			placed.push(rectFor(d));
+			renderStyles();
+			finalizeGeom(p);
+		});
 	}
 	function attachCanvasListener() {
 		var iframe = document.getElementById('bricks-builder-iframe');
@@ -897,10 +1149,54 @@
 
 	/* --------------------------------------------------------------- boot up */
 
-	function applyAll() { PANELS.forEach(applyPanel); applyRightBarBg(); }
+	function applyAll() { PANELS.forEach(applyPanel); applyRightBarBg(); updateStackTabs(); applyTransparency(); }
+
+	/* ------------------------------- tabbed side-dock tab switcher ---------- */
+
+	var stackTabsEl = null;
+	function buildStackTabs() {
+		if (stackTabsEl) { return stackTabsEl; }
+		stackTabsEl = document.createElement('div');
+		stackTabsEl.id = 'bfp-stack-tabs';
+		PANELS.forEach(function (p) {
+			var b = document.createElement('button');
+			b.type = 'button';
+			b.dataset.id = p.id;
+			b.textContent = p.label;
+			b.addEventListener('click', function (e) {
+				e.stopPropagation();
+				stackTab = p.id;
+				// Reveal the panel into the (locked) stack if it was off.
+				if (modeOf(p) === 'hidden') { geomFor(p).mode = 'dock'; geomFor(p).lastShown = 'dock'; saveState(); updateButtons(); }
+				applyAll();
+				updateStackTabs();
+			});
+			stackTabsEl.appendChild(b);
+		});
+		document.body.appendChild(stackTabsEl);
+		return stackTabsEl;
+	}
+	function updateStackTabs() {
+		var on = stackOn() && OPT.stack_layout === 'tabbed';
+		var el = on ? buildStackTabs() : stackTabsEl;
+		if (!el) { return; }
+		if (!on) { el.style.display = 'none'; return; }
+		var ww = window.innerWidth, top0 = 58, pad = 8, W = 340;
+		var x = (OPT.stack_side === 'left') ? pad : (ww - W - pad);
+		el.style.display = 'flex';
+		el.style.left = x + 'px';
+		el.style.top = top0 + 'px';
+		el.style.width = W + 'px';
+		Array.prototype.forEach.call(el.children, function (b) {
+			b.classList.toggle('bfp-on', b.dataset.id === stackTab);
+		});
+	}
 
 	function syncDockGrabs() {
-		PANELS.forEach(function (p) { if (modeOf(p) === 'dock') { positionDockGrab(p); } });
+		PANELS.forEach(function (p) {
+			if (modeOf(p) === 'dock' && !isStacked(p)) { positionDockGrab(p); } else { hideDockGrab(p); }
+		});
+		updateStackTabs();
 	}
 	window.addEventListener('resize', syncDockGrabs);
 	window.addEventListener('scroll', syncDockGrabs, true);
@@ -925,9 +1221,18 @@
 				document.getElementById('bricks-panel');
 			if (found) {
 				clearInterval(timer);
+				// If stacking is on at load, make visible panels locked (not float).
+				if (stackOn()) {
+					PANELS.forEach(function (p) {
+						if (modeOf(p) !== 'hidden') { geomFor(p).mode = 'dock'; geomFor(p).lastShown = 'dock'; }
+					});
+					saveState();
+				}
 				mountControls();
+				applyTransparency();
 				applyAll();
 				attachCanvasListener();
+				if (stackOn()) { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }
 				new MutationObserver(scheduleApply)
 					.observe(document.body, { childList: true, subtree: true });
 			} else if (tries > 100) {

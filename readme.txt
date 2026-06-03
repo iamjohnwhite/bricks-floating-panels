@@ -4,7 +4,7 @@ Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.8.6
+Stable tag: 2.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,46 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.4 =
+* Avoid-overlap: moved panels now sit next to each other instead of one being
+  shoved far while the other barely moves.
+* Fixed the tabbed switcher and the tear-off grab tabs appearing while stacking
+  was off / panels were stacked.
+* Darkened the stacked dock gutter to match the editor.
+
+= 2.0.3 =
+* Side-docking now reserves canvas space (pads the preview area) so the design
+  shrinks instead of sitting under the stacked panels.
+* Avoid-overlap: when both panels move, they no longer land on top of each other.
+* Settings page notes that these add-ons are beta / in development.
+
+= 2.0.2 =
+* Transparency now applies only to floating panels; locked and stacked panels
+  stay solid. The droplet toggle always appears on floating title bars when
+  see-through is enabled (removed the separate show/hide option).
+* Side-docking is now a true dock: the canvas reserves space and shrinks instead
+  of the panels sitting on top of the design.
+* Fixed the docked Structure panel header being hidden under the toolbar.
+
+= 2.0.1 =
+* Transparency is now fully governed by the dashboard setting (turning it off
+  forces panels solid). The droplet toggle moved into the floating panel's title
+  bar. Opacity range is now 10-100% with an 80% recommendation.
+* Side-docking is now a locked arrangement (not float): it has a toolbar toggle,
+  disables Float while active, and overrides the native dock so panels never
+  overlap.
+* Avoid-overlap now nudges a panel just past the selected element's nearest edge,
+  and you can choose whether it moves Settings, Structure, or both.
+
+= 2.0.0 =
+* New dashboard settings page (under the Bricks menu) for optional add-ons.
+* Panel transparency: a see-through option with an opacity slider, plus a
+  droplet toggle in the builder toolbar to switch it on/off live.
+* Avoid-overlap: optionally move a floating panel aside when it covers the
+  element you select.
+* Side-docking: optionally stack both panels on one side, either stacked
+  (both visible) or tabbed (one at a time). All new features are off by default.
 
 = 1.8.6 =
 * Advanced Themer's right-side element shortcuts bar now gets a solid dark
