@@ -1,0 +1,68 @@
+name: Release on version bump
+
+# Runs on every push to main. Reads the Version header from the plugin file
+# and, if no release exists for that version yet, creates a tag (vX.Y.Z) and a
+# GitHub Release with a packaged plugin zip attached. Bumping the version in
+# bricks-floating-panels.php is all that is needed to cut a new release.
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read plugin version from header
+        id: ver
+        run: |
+          VERSION=$(grep -iE "^[[:space:]]*\*[[:space:]]*Version:" bricks-floating-panels.php \
+            | head -1 \
+            | sed -E 's/.*Version:[[:space:]]*//' \
+            | tr -d '[:space:]\r')
+          if [ -z "$VERSION" ]; then
+            echo "Could not find a Version header. Aborting."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version: $VERSION"
+
+      - name: Check whether this release already exists
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.ver.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release v${{ steps.ver.outputs.version }} already exists. Skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build plugin zip
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          mkdir -p build/bricks-floating-panels
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.DS_Store' \
+            --exclude 'build' \
+            ./ build/bricks-floating-panels/
+          (cd build && zip -rq "../bricks-floating-panels.zip" bricks-floating-panels)
+
+      - name: Create the release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.ver.outputs.version }}" \
+            bricks-floating-panels.zip \
+            --title "${{ steps.ver.outputs.version }}" \
+            --notes "Automated release for version ${{ steps.ver.outputs.version }}. See readme.txt changelog for details."
