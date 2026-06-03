@@ -4,8 +4,8 @@ Turns the Bricks builder's docked Settings and Structure panels into draggable,
 floating overlays so they stop squeezing the canvas, with a Beaver-Builder-style
 feel. Loads only inside the Bricks builder and never touches the front end.
 
-- **Author:** True Mtn Marketing
-- **Current version:** 1.8.3
+- **Author:** John White
+- **Current version:** 1.8.4
 - **Requires:** WordPress 5.8+, PHP 7.4+, Bricks (active)
 
 ## What it does
