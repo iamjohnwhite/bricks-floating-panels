@@ -56,7 +56,7 @@ No. The builder returns to its normal docked panels.
 == Changelog ==
 
 = 1.8.4 =
-* Updated the plugin author to John White (https://iamjohnwhite.com).
+* Test release to verify automatic update delivery to WordPress sites.
 
 = 1.8.3 =
 * Renamed the plugin to "BFP Bricks Floating Panels" for clearer identification in the Plugins list.
