@@ -872,26 +872,8 @@
 
 	function findRightBar() {
 		if (rightBar && rightBar.isConnected) { return rightBar; }
-		rightBar = null;
-		var ww = window.innerWidth, wh = window.innerHeight, best = null;
-		var nodes = document.body.querySelectorAll('div, nav, aside, ul');
-		for (var i = 0; i < nodes.length; i++) {
-			var n = nodes[i];
-			if (n.id === 'bfp-dock-hint' || n.id === 'bfp-controls') { continue; }
-			if (n.closest('#bricks-panel, #bricks-structure, #bfp-controls, .bfp-dragbar, #bricks-toolbar')) { continue; }
-			var cs = getComputedStyle(n);
-			// Note: AT's elements column is in normal flow, so we do NOT require
-			// fixed/absolute positioning here.
-			if (cs.display === 'none' || cs.visibility === 'hidden') { continue; }
-			var r = n.getBoundingClientRect();
-			if (r.width < 24 || r.width > 96) { continue; }     // narrow strip
-			if (r.right < ww - 16) { continue; }                // hugging the right edge
-			if (r.height < wh * 0.4) { continue; }              // tall
-			if (r.top > wh * 0.45) { continue; }
-			if (n.querySelectorAll('svg, button, a, img, i').length < 5) { continue; } // icon buttons
-			if (!best || r.height > best.h) { best = { n: n, h: r.height }; }
-		}
-		rightBar = best ? best.n : null;
+		// Advanced Themer's right-side element shortcuts bar (exact class).
+		rightBar = document.querySelector('.brxce-panel-shortcut__wrapper');
 		return rightBar;
 	}
 

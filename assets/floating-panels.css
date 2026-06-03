@@ -8,6 +8,11 @@
    and toolbar controls.
    ========================================================================== */
 
+/* Remove the 48px top margin Bricks/AT puts on the docked Structure panel,
+   which leaves a white gap above it. (When floating, the injected #bricks-structure
+   rule sets margin:0 anyway, so this only affects the docked state.) */
+#bricks-structure { margin-top: 0 !important; }
+
 /* --- Toolbar controls (3-state segmented selector per panel) -------------- */
 
 #bfp-controls {
