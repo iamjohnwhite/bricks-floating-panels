@@ -80,8 +80,8 @@ add_action(
 	'init',
 	function () {
 		$lib = BFP_PATH . 'plugin-update-checker/plugin-update-checker.php';
-		if ( ! file_exists( $lib ) || false !== strpos( BFP_GITHUB_REPO, 'iamjohnwhite' ) ) {
-			return; // Not set up yet: stay dormant.
+		if ( ! file_exists( $lib ) ) {
+			return; // Update checker library missing: stay dormant.
 		}
 		require_once $lib;
 		if ( ! class_exists( '\\YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory' ) ) {

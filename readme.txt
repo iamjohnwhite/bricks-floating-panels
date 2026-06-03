@@ -57,6 +57,7 @@ No. The builder returns to its normal docked panels.
 
 = 1.8.3 =
 * Renamed the plugin to "BFP Bricks Floating Panels" for clearer identification in the Plugins list.
+* Fixed the GitHub update checker, which was disabled by a leftover placeholder guard, so future versions now appear as plugin updates automatically.
 
 = 1.8.2 =
 * Added a lock (dock) button in the floating drag bar.
