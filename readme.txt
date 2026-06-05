@@ -4,7 +4,7 @@ Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.5
+Stable tag: 2.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,13 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.6 =
+* Floating panels can no longer be dragged up into the Bricks toolbar area.
+* Stacked dock gutter is now medium grey so Settings and Structure are easy to
+  tell apart.
+* Fixed the quick-access shortcuts sitting at the bottom of the Settings panel
+  when stacked (they now fill from the top).
 
 = 2.0.5 =
 * Floating panels can now be resized in height by dragging a handle on their

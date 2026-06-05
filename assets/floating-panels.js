@@ -91,6 +91,7 @@
 	var EASE_IN  = 'cubic-bezier(.4,0,.7,.2)';
 	var SNAP = 22;
 	var DOCK_ZONE = 40;
+	var TOP_MIN = 56; // floating panels never go above this (clears the toolbar)
 
 	var autoOpened = {};
 	var animating = {};
@@ -173,6 +174,7 @@
 			left = Math.max(0, window.innerWidth - width - p.defaults.right);
 		} else { left = p.defaults.left; }
 		var top = typeof g.top === 'number' ? g.top : p.defaults.top;
+		top = Math.max(TOP_MIN, top); // never above the toolbar
 		return { left: Math.round(left), top: Math.round(top), width: Math.round(width), height: Math.round(height) };
 	}
 	function ensureDesired(p) {
@@ -202,7 +204,7 @@
 		if (!isStacked(p)) {
 			return { left: d.left, top: d.top, width: d.width, height: d.height, hidden: false };
 		}
-		var ww = window.innerWidth, wh = window.innerHeight, top0 = 58, gap = 8, pad = 8, W = 340;
+		var ww = window.innerWidth, wh = window.innerHeight, top0 = 58, gap = 14, pad = 8, W = 340;
 		var x = (OPT.stack_side === 'left') ? pad : (ww - W - pad);
 		if (OPT.stack_layout === 'tabbed') {
 			var tabsH = 32;
@@ -248,8 +250,10 @@
 			// Settings panel (floating, visible): pin Bricks' element quick-access
 			// toolbar to the panel's left edge so it rides along.
 			if (p.id === 'bricks-panel' && !g.hidden && (mode === 'float' || isStacked(p))) {
-				var qaTop = g.top + DRAGBAR_H;
-				var qaH = Math.max(0, g.height - DRAGBAR_H);
+				// Stacked panels have no drag bar, so don't offset by its height.
+				var barH = (mode === 'float' && !isStacked(p)) ? DRAGBAR_H : 0;
+				var qaTop = g.top + barH;
+				var qaH = Math.max(0, g.height - barH);
 				var qaW = getQAWidth();
 				css += '#' + QUICK_ACCESS_ID + '{position:fixed!important;left:' + g.left +
 					'px!important;top:' + qaTop + 'px!important;right:auto!important;bottom:auto!important;' +
@@ -267,8 +271,9 @@
 		if (stackOn()) {
 			var reserve = 340 + 16; // stack width + padding
 			var prop = (OPT.stack_side === 'left') ? 'padding-left' : 'padding-right';
-			// Dark gutter to match the editor chrome (was light grey).
-			css += '#bricks-preview{' + prop + ':' + reserve + 'px!important;box-sizing:border-box!important;background:#161a1d!important;}';
+			// Medium-grey gutter so the dark panels (and the gap between Settings and
+			// Structure) read clearly against it.
+			css += '#bricks-preview{' + prop + ':' + reserve + 'px!important;box-sizing:border-box!important;background:#3a4049!important;}';
 			css += '#bricks-builder-iframe-wrapper{max-width:100%!important;}';
 		}
 		styleTag.textContent = css;
@@ -744,7 +749,7 @@
 		function onMove(e) {
 			var d = ensureDesired(p);
 			d.left = clamp(startLeft + (e.clientX - startX), 0, window.innerWidth - 60);
-			d.top = clamp(startTop + (e.clientY - startY), 0, window.innerHeight - 40);
+			d.top = clamp(startTop + (e.clientY - startY), TOP_MIN, window.innerHeight - 40);
 			renderStyles();
 			if (d.left <= DOCK_ZONE) { dockSide = 'left'; }
 			else if (window.innerWidth - (d.left + d.width) <= DOCK_ZONE) { dockSide = 'right'; }
@@ -765,7 +770,7 @@
 
 	function maybeSnap(p) {
 		var d = ensureDesired(p);
-		if (d.top <= SNAP && d.top > 8) { tweenTop(p, 8); }
+		if (d.top <= TOP_MIN + SNAP && d.top > TOP_MIN) { tweenTop(p, TOP_MIN); }
 		else { finalizeGeom(p); }
 	}
 	function tweenTop(p, toTop) {
@@ -1054,7 +1059,7 @@
 			}
 			var best = null;
 			cands.forEach(function (c) {
-				var lo = pad, hi = (c.axis === 'x') ? (ww - d.width - pad) : (wh - d.height - pad);
+				var lo = (c.axis === 'x') ? pad : TOP_MIN, hi = (c.axis === 'x') ? (ww - d.width - pad) : (wh - d.height - pad);
 				if (c.val < lo || c.val > hi) { return; }
 				if (!clearOf(tryVal(c.axis, c.val))) { return; }   // clears element AND placed panels
 				var cur = (c.axis === 'x') ? d.left : d.top;
@@ -1070,14 +1075,14 @@
 				var maxRoom = Math.max(roomLeft, roomRight, roomTop, roomBottom);
 				if (maxRoom === roomLeft) { d.left = pad; }
 				else if (maxRoom === roomRight) { d.left = Math.max(pad, ww - d.width - pad); }
-				else if (maxRoom === roomTop) { d.top = pad; }
-				else { d.top = Math.max(pad, wh - d.height - pad); }
+				else if (maxRoom === roomTop) { d.top = TOP_MIN; }
+				else { d.top = Math.max(TOP_MIN, wh - d.height - pad); }
 				placed.forEach(function (q) {
-					if (rectsOverlap(rectFor(d), q)) { d.top = clamp(q.bottom + GAP, pad, Math.max(pad, wh - d.height - pad)); }
+					if (rectsOverlap(rectFor(d), q)) { d.top = clamp(q.bottom + GAP, TOP_MIN, Math.max(TOP_MIN, wh - d.height - pad)); }
 				});
 			}
 			d.left = clamp(d.left, 0, Math.max(0, ww - d.width - pad));
-			d.top = clamp(d.top, 0, Math.max(0, wh - d.height - pad));
+			d.top = clamp(d.top, TOP_MIN, Math.max(TOP_MIN, wh - d.height - pad));
 			placed.push(rectFor(d));
 			renderStyles();
 			finalizeGeom(p);
@@ -1174,7 +1179,7 @@
 	function placeUnderCursor(p, ev) {
 		var d = ensureDesired(p);
 		d.left = clamp(ev.clientX - 40, 0, window.innerWidth - 60);
-		d.top = clamp(ev.clientY - 14, 0, window.innerHeight - 40);
+		d.top = clamp(ev.clientY - 14, TOP_MIN, window.innerHeight - 40);
 	}
 
 	/* ------------------------------- Advanced Themer right elements bar ------- */
