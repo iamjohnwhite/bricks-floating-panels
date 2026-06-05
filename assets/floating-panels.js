@@ -258,8 +258,11 @@
 				css += '#' + QUICK_ACCESS_ID + '{position:fixed!important;left:' + g.left +
 					'px!important;top:' + qaTop + 'px!important;right:auto!important;bottom:auto!important;' +
 					'height:' + qaH + 'px!important;margin:0!important;transform:none!important;' +
-					'transition:none!important;z-index:' + (zFor(p) + 1) +
+					'transition:none!important;justify-content:flex-start!important;align-content:flex-start!important;' +
+					'z-index:' + (zFor(p) + 1) +
 					'!important;border-radius:0 0 0 8px!important;}';
+				// Bricks pushes these shortcuts to the bottom; keep them at the top.
+				css += '#' + QUICK_ACCESS_ID + ' > *{margin-top:0!important;}';
 				css += '#' + QUICK_ACCESS_ID + ' .toggle{display:none!important;}';
 				css += '#bricks-panel-element{margin-left:' + qaW + 'px!important;}';
 			}
@@ -681,7 +684,7 @@
 		lock.type = 'button';
 		lock.className = 'bfp-dragbar-lock';
 		lock.title = 'Lock (dock) the ' + p.label + ' panel';
-		lock.innerHTML = lockIconSVG();
+		lock.innerHTML = dockIconSVG(); // match the toolbar's locked-state icon
 		lock.addEventListener('mousedown', stop);
 		lock.addEventListener('click', function (e) { stop(e); setMode(p, 'dock'); });
 		right.appendChild(lock);

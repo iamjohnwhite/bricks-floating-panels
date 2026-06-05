@@ -4,7 +4,7 @@ Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.6
+Stable tag: 2.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,11 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.7 =
+* Float drag-bar lock button now uses the same dock icon as the toolbar's
+  locked state (consistent iconography).
+* Top-aligned the quick-access shortcuts in the stacked Settings panel.
 
 = 2.0.6 =
 * Floating panels can no longer be dragged up into the Bricks toolbar area.
