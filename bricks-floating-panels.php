@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name:       Floating Panels for Bricks
- * Plugin URI:        https://iamjohnwhite.com
+ * Plugin URI:        https://github.com/iamjohnwhite/bricks-floating-panels
  * Description:        Turns the Bricks builder Settings panel and Structure panel into draggable, resizable floating overlays so they stop squeezing the canvas. Toggle on/off from the toolbar button or with Cmd/Ctrl + Shift + F.
- * Version:           2.0.9
+ * Version:           2.0.11
  * Author:            John White
  * Author URI:        https://iamjohnwhite.com
  * License:           GPL-2.0-or-later
@@ -21,9 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'BFP_VERSION', '2.0.9' );
-define( 'BFP_URL', plugin_dir_url( __FILE__ ) );
-define( 'BFP_PATH', plugin_dir_path( __FILE__ ) );
+define( 'BFPANELS_VERSION', '2.0.11' );
+define( 'BFPANELS_URL', plugin_dir_url( __FILE__ ) );
+define( 'BFPANELS_PATH', plugin_dir_path( __FILE__ ) );
 
 /**
  * Load assets only inside the Bricks builder main window.
@@ -43,30 +43,30 @@ add_action(
 
 		wp_enqueue_style(
 			'bfp-floating-panels',
-			BFP_URL . 'assets/floating-panels.css',
+			BFPANELS_URL . 'assets/floating-panels.css',
 			array(),
-			BFP_VERSION
+			BFPANELS_VERSION
 		);
 
 		wp_enqueue_script(
 			'bfp-floating-panels',
-			BFP_URL . 'assets/floating-panels.js',
+			BFPANELS_URL . 'assets/floating-panels.js',
 			array(),
-			BFP_VERSION,
+			BFPANELS_VERSION,
 			true
 		);
 
 		/**
 		 * Pass settings to the script. Default state can be forced on/off with
-		 * the bfp_default_active filter if you ever want it enabled by default.
+		 * the bfpanels_default_active filter if you ever want it enabled by default.
 		 */
 		wp_localize_script(
 			'bfp-floating-panels',
 			'BFP_SETTINGS',
 			array(
-				'defaultActive' => (bool) apply_filters( 'bfp_default_active', false ),
-				'version'       => BFP_VERSION,
-				'options'       => bfp_get_options(),
+				'defaultActive' => (bool) apply_filters( 'bfpanels_default_active', false ),
+				'version'       => BFPANELS_VERSION,
+				'options'       => bfpanels_get_options(),
 			)
 		);
 	},
@@ -74,13 +74,14 @@ add_action(
 );
 
 
-if ( ! defined( 'BFP_GITHUB_REPO' ) ) {
-	define( 'BFP_GITHUB_REPO', 'https://github.com/iamjohnwhite/bricks-floating-panels/' );
+/* BFP-GH-UPDATER-START (this whole block is stripped from the WordPress.org build) */
+if ( ! defined( 'BFPANELS_GITHUB_REPO' ) ) {
+	define( 'BFPANELS_GITHUB_REPO', 'https://github.com/iamjohnwhite/bricks-floating-panels/' );
 }
 add_action(
 	'init',
 	function () {
-		$lib = BFP_PATH . 'plugin-update-checker/plugin-update-checker.php';
+		$lib = BFPANELS_PATH . 'plugin-update-checker/plugin-update-checker.php';
 		if ( ! file_exists( $lib ) ) {
 			return; // Update checker library missing: stay dormant.
 		}
@@ -89,7 +90,7 @@ add_action(
 			return;
 		}
 		$checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-			BFP_GITHUB_REPO,
+			BFPANELS_GITHUB_REPO,
 			__FILE__,
 			'bricks-floating-panels'
 		);
@@ -98,6 +99,7 @@ add_action(
 		}
 	}
 );
+/* BFP-GH-UPDATER-END */
 
 /* =========================================================================
  * Settings (2.0): dashboard options page + stored option, read by the builder.
@@ -107,7 +109,7 @@ add_action(
  * Default option values. All new 2.0 features are OFF by default so the base
  * experience is unchanged unless a user opts in.
  */
-function bfp_default_options() {
+function bfpanels_default_options() {
 	return array(
 		'transparency'        => 0,        // panel see-through on/off
 		'opacity'             => 80,       // main panel opacity (10-100)
@@ -119,11 +121,11 @@ function bfp_default_options() {
 	);
 }
 
-function bfp_get_options() {
-	return wp_parse_args( get_option( 'bfp_options', array() ), bfp_default_options() );
+function bfpanels_get_options() {
+	return wp_parse_args( get_option( 'bfp_options', array() ), bfpanels_default_options() );
 }
 
-function bfp_sanitize_options( $in ) {
+function bfpanels_sanitize_options( $in ) {
 	$in = is_array( $in ) ? $in : array();
 	$out = array();
 	$out['transparency']        = empty( $in['transparency'] ) ? 0 : 1;
@@ -139,7 +141,7 @@ function bfp_sanitize_options( $in ) {
 add_action(
 	'admin_init',
 	function () {
-		register_setting( 'bfp_options_group', 'bfp_options', array( 'sanitize_callback' => 'bfp_sanitize_options' ) );
+		register_setting( 'bfp_options_group', 'bfp_options', array( 'sanitize_callback' => 'bfpanels_sanitize_options' ) );
 	}
 );
 
@@ -153,77 +155,77 @@ add_action(
 		$parent = isset( $GLOBALS['admin_page_hooks']['bricks'] ) ? 'bricks' : 'options-general.php';
 		add_submenu_page(
 			$parent,
-			'Floating Panels',
-			'Floating Panels',
+			__( 'Floating Panels for Bricks', 'bricks-floating-panels' ),
+			__( 'Floating Panels', 'bricks-floating-panels' ),
 			'manage_options',
 			'bfp-settings',
-			'bfp_render_settings_page'
+			'bfpanels_render_settings_page'
 		);
 	},
 	100
 );
 
-function bfp_render_settings_page() {
+function bfpanels_render_settings_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	$o = bfp_get_options();
+	$o = bfpanels_get_options();
 	?>
 	<div class="wrap">
-		<h1>Floating Panels for Bricks</h1>
+		<h1><?php echo esc_html__( 'Floating Panels for Bricks', 'bricks-floating-panels' ); ?></h1>
 		<div class="notice notice-warning inline" style="margin:14px 0;padding:10px 12px;">
-			<p style="margin:0;"><strong>Beta features.</strong> The options below are still in active development and may change or have rough edges. Everything is off by default, so your core floating panels are unaffected unless you opt in.</p>
+			<p style="margin:0;"><strong><?php echo esc_html__( 'Beta features.', 'bricks-floating-panels' ); ?></strong> <?php echo esc_html__( 'The options below are still in active development and may change or have rough edges. Everything is off by default, so your core floating panels are unaffected unless you opt in.', 'bricks-floating-panels' ); ?></p>
 		</div>
-		<p>These are optional add-ons to the core floating panels. Turn on only what you want, so the builder isn't cluttered.</p>
+		<p><?php echo esc_html__( 'These are optional add-ons to the core floating panels. Turn on only what you want, so the builder is not cluttered.', 'bricks-floating-panels' ); ?></p>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'bfp_options_group' ); ?>
 			<table class="form-table" role="presentation">
 				<tr>
-					<th scope="row">Panel transparency</th>
+					<th scope="row"><?php echo esc_html__( 'Panel transparency', 'bricks-floating-panels' ); ?></th>
 					<td>
-						<label><input type="checkbox" name="bfp_options[transparency]" value="1" <?php checked( $o['transparency'], 1 ); ?>> Make floating panels see-through</label>
-						<p class="description">Lets the canvas show through the panels so you can preview while editing.</p>
+						<label><input type="checkbox" name="bfp_options[transparency]" value="1" <?php checked( $o['transparency'], 1 ); ?>> <?php echo esc_html__( 'Make floating panels see-through', 'bricks-floating-panels' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Lets the canvas show through the panels so you can preview while editing.', 'bricks-floating-panels' ); ?></p>
 						<p style="margin-top:10px;">
-							<label>Opacity:
+							<label><?php echo esc_html__( 'Opacity:', 'bricks-floating-panels' ); ?>
 								<input type="range" name="bfp_options[opacity]" min="10" max="100" value="<?php echo esc_attr( $o['opacity'] ); ?>" oninput="this.nextElementSibling.value=this.value+'%'">
 								<output><?php echo esc_html( $o['opacity'] ); ?>%</output>
 							</label>
-							<br><span class="description">Lower = more see-through. 100% = solid. <strong>Recommended: around 80%.</strong> A droplet toggle appears on floating panel title bars to flip it on/off while you work.</span>
+							<br><span class="description"><?php echo esc_html__( 'Lower = more see-through. 100% = solid. Recommended: around 80%. A droplet toggle appears on floating panel title bars to flip it on/off while you work.', 'bricks-floating-panels' ); ?></span>
 						</p>
 					</td>
 				</tr>
 				<tr>
-					<th scope="row">Avoid the selected element</th>
+					<th scope="row"><?php echo esc_html__( 'Avoid the selected element', 'bricks-floating-panels' ); ?></th>
 					<td>
-						<label><input type="checkbox" name="bfp_options[avoid_overlap]" value="1" <?php checked( $o['avoid_overlap'], 1 ); ?>> Move a floating panel aside if it covers the element you select</label>
+						<label><input type="checkbox" name="bfp_options[avoid_overlap]" value="1" <?php checked( $o['avoid_overlap'], 1 ); ?>> <?php echo esc_html__( 'Move a floating panel aside if it covers the element you select', 'bricks-floating-panels' ); ?></label>
 						<p style="margin-top:10px;">
-							<label>Apply to:
+							<label><?php echo esc_html__( 'Apply to:', 'bricks-floating-panels' ); ?>
 								<select name="bfp_options[avoid_which]">
-									<option value="both" <?php selected( $o['avoid_which'], 'both' ); ?>>Both panels</option>
-									<option value="settings" <?php selected( $o['avoid_which'], 'settings' ); ?>>Settings only</option>
-									<option value="structure" <?php selected( $o['avoid_which'], 'structure' ); ?>>Structure only</option>
+									<option value="both" <?php selected( $o['avoid_which'], 'both' ); ?>><?php echo esc_html__( 'Both panels', 'bricks-floating-panels' ); ?></option>
+									<option value="settings" <?php selected( $o['avoid_which'], 'settings' ); ?>><?php echo esc_html__( 'Settings only', 'bricks-floating-panels' ); ?></option>
+									<option value="structure" <?php selected( $o['avoid_which'], 'structure' ); ?>><?php echo esc_html__( 'Structure only', 'bricks-floating-panels' ); ?></option>
 								</select>
 							</label>
-							<br><span class="description">Leave one panel put while the other gets out of the way.</span>
+							<br><span class="description"><?php echo esc_html__( 'Leave one panel put while the other gets out of the way.', 'bricks-floating-panels' ); ?></span>
 						</p>
 					</td>
 				</tr>
 				<tr>
-					<th scope="row">Dock both panels to one side</th>
+					<th scope="row"><?php echo esc_html__( 'Dock both panels to one side', 'bricks-floating-panels' ); ?></th>
 					<td>
-						<label><input type="checkbox" name="bfp_options[stack]" value="1" <?php checked( $o['stack'], 1 ); ?>> Stack Settings and Structure together on one side</label>
+						<label><input type="checkbox" name="bfp_options[stack]" value="1" <?php checked( $o['stack'], 1 ); ?>> <?php echo esc_html__( 'Stack Settings and Structure together on one side', 'bricks-floating-panels' ); ?></label>
 						<p style="margin-top:10px;">
-							<label>Side:
+							<label><?php echo esc_html__( 'Side:', 'bricks-floating-panels' ); ?>
 								<select name="bfp_options[stack_side]">
-									<option value="right" <?php selected( $o['stack_side'], 'right' ); ?>>Right</option>
-									<option value="left" <?php selected( $o['stack_side'], 'left' ); ?>>Left</option>
+									<option value="right" <?php selected( $o['stack_side'], 'right' ); ?>><?php echo esc_html__( 'Right', 'bricks-floating-panels' ); ?></option>
+									<option value="left" <?php selected( $o['stack_side'], 'left' ); ?>><?php echo esc_html__( 'Left', 'bricks-floating-panels' ); ?></option>
 								</select>
 							</label>
 							&nbsp;&nbsp;
-							<label>Layout:
+							<label><?php echo esc_html__( 'Layout:', 'bricks-floating-panels' ); ?>
 								<select name="bfp_options[stack_layout]">
-									<option value="stacked" <?php selected( $o['stack_layout'], 'stacked' ); ?>>Stacked (both visible)</option>
-									<option value="tabbed" <?php selected( $o['stack_layout'], 'tabbed' ); ?>>Tabbed (one at a time)</option>
+									<option value="stacked" <?php selected( $o['stack_layout'], 'stacked' ); ?>><?php echo esc_html__( 'Stacked (both visible)', 'bricks-floating-panels' ); ?></option>
+									<option value="tabbed" <?php selected( $o['stack_layout'], 'tabbed' ); ?>><?php echo esc_html__( 'Tabbed (one at a time)', 'bricks-floating-panels' ); ?></option>
 								</select>
 							</label>
 						</p>

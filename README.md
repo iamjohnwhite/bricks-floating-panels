@@ -5,7 +5,7 @@ floating overlays so they stop squeezing the canvas, with a Beaver-Builder-style
 feel. Loads only inside the Bricks builder and never touches the front end.
 
 - **Author:** John White
-- **Current version:** 2.0.9
+- **Current version:** 2.0.11
 - **Requires:** WordPress 5.8+, PHP 7.4+, Bricks (active)
 
 ## What it does
@@ -96,15 +96,38 @@ bricks-floating-panels/
     └── floating-panels.js       # all behavior
 ```
 
+## Releasing both versions (GitHub + WordPress.org)
+
+There is one source of truth: this `bricks-floating-panels/` folder (the GitHub
+copy, which includes the updater). The WordPress.org build is generated from it
+by stripping the GitHub updater, so the two never drift.
+
+To cut a release:
+
+1. Make your changes here and bump the version in all three spots (header
+   `Version:`, `BFPANELS_VERSION`, and `Stable tag` in `readme.txt`).
+2. From the parent folder, run `python3 build-versions.py`. It produces two zips:
+   - `bricks-floating-panels-github-<ver>.zip` — full plugin (updater +
+     `plugin-update-checker/`). Attach this to the GitHub release.
+   - `bricks-floating-panels-wporg-<ver>.zip` — updater stripped, library
+     removed. Use this for the WordPress.org submission / SVN commit.
+3. GitHub: commit, tag `v<ver>`, publish the release (existing users update in
+   place). WordPress.org: commit the wporg contents to SVN trunk + `tags/<ver>`.
+
+The updater block in `bricks-floating-panels.php` is wrapped in
+`/* BFP-GH-UPDATER-START */ ... /* BFP-GH-UPDATER-END */` markers; the build
+script removes everything between them for the .org build. Leave those markers in
+place.
+
 ## Versioning & updates
 
 The version lives in three spots that must match: the header `Version:` comment
-and the `BFP_VERSION` constant in `bricks-floating-panels.php`, and `Stable tag`
-in `readme.txt`. `BFP_VERSION` is the asset cache-buster, so bump it on every
+and the `BFPANELS_VERSION` constant in `bricks-floating-panels.php`, and `Stable tag`
+in `readme.txt`. `BFPANELS_VERSION` is the asset cache-buster, so bump it on every
 change or browsers serve stale JS/CSS.
 
 Updates are delivered from GitHub releases via Plugin Update Checker (pointed at
-`BFP_GITHUB_REPO`). Tag a release matching the version and installed sites see it
+`BFPANELS_GITHUB_REPO`). Tag a release matching the version and installed sites see it
 on their Plugins screen, normally within ~12 hours or instantly via "Check
 Again."
 

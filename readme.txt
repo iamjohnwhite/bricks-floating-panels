@@ -4,7 +4,7 @@ Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.9
+Stable tag: 2.0.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,14 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.11 =
+* Code housekeeping for WordPress.org: unique function/constant/filter prefixes
+  and hidden dev files excluded from the distributed build. No functional change.
+
+= 2.0.10 =
+* Internationalized the settings page (translation-ready) and tightened output
+  escaping, for WordPress.org submission readiness.
 
 = 2.0.9 =
 * Floating Structure panel now keeps its header fixed and scrolls only the inner
