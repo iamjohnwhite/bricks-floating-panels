@@ -5,7 +5,7 @@ floating overlays so they stop squeezing the canvas, with a Beaver-Builder-style
 feel. Loads only inside the Bricks builder and never touches the front end.
 
 - **Author:** John White
-- **Current version:** 2.0.4
+- **Current version:** 2.0.5
 - **Requires:** WordPress 5.8+, PHP 7.4+, Bricks (active)
 
 ## What it does
@@ -16,7 +16,8 @@ mutually exclusive states, chosen from a segmented control in the top toolbar
 
 - **Locked** — Bricks' native docked layout. Native panel resize works here.
 - **Float** — a draggable overlay that scales/fades in, snaps to the top edge,
-  and docks when dragged to a side edge. Sized with S/M/L/XL width presets.
+  and docks when dragged to a side edge. Width is set with S/M/L/XL presets and
+  height is dragged from a handle on the panel's bottom edge.
 - **Off** — hidden; canvas is full width. The Off button toggles: pressing it
   again restores the last state. Each floating panel's `×` also sets Off.
 
@@ -37,6 +38,30 @@ Other behavior:
 
 Toggle floating for both panels at once with **Cmd/Ctrl + Shift + F**.
 
+## Beta add-ons (2.0)
+
+2.0 introduced a dashboard settings page at **Bricks → Floating Panels** (falls
+back to **Settings → Floating Panels** if the Bricks menu isn't present). These
+extras are all **off by default** and flagged as beta, so the core experience is
+unchanged unless a user opts in. Options are stored in the `bfp_options` option
+and passed to the builder via `BFP_SETTINGS.options`.
+
+- **Transparency.** Makes floating panels see-through, with an opacity slider
+  (10–100%, ~80% recommended). A droplet icon on each floating panel's title bar
+  toggles it live; the dashboard setting is the master switch (turning it off
+  forces panels solid). Only floating panels go transparent — locked/stacked
+  stay solid.
+- **Avoid the selected element.** When you select an element a floating panel is
+  covering, the panel nudges just past the element's nearest edge (least
+  movement; farthest edge if it can't fully clear). You choose whether it moves
+  Settings, Structure, or both, and two moved panels sit adjacent rather than on
+  top of each other.
+- **Side-docking (stacked / tabbed).** A toolbar stack icon (shown when enabled)
+  locks both panels onto one side as a true dock: the canvas reserves a gutter
+  and shrinks rather than the panels floating over the design. Stacked shows both
+  (split height); tabbed shows one at a time with a switcher. Float is disabled
+  while stacked.
+
 ## How it works (key decisions)
 
 - **Geometry via an injected stylesheet.** Float position/size/visibility is
@@ -51,25 +76,37 @@ Toggle floating for both panels at once with **Cmd/Ctrl + Shift + F**.
 - **No DOM relocation.** The quick-access bar and Advanced Themer bar are
   repositioned/styled in place, never moved in the DOM, so their native
   click/drag-to-insert behavior is preserved.
-- **Sizing is preset-only.** Drag-to-resize fought Bricks' own panel sizing, so
-  floating panels use S/M/L/XL width presets instead; the native resize grip is
-  suppressed only while floating and restored when docked.
+- **Sizing.** Width uses S/M/L/XL presets (drag-to-resize once fought Bricks'
+  own panel sizing). Height is drag-resizable from a bottom-edge handle, which is
+  reliable now that geometry is driven through the injected stylesheet. The
+  native resize grip is suppressed while floating and restored when docked.
+- **Per-panel scroll.** Settings keeps `overflow:hidden` (it has its own inner
+  scroll, so this avoids a double scrollbar); Structure uses `overflow:auto`
+  because it has no inner scroll container and would otherwise be unscrollable.
 
 ## File structure
 
 ```
 bricks-floating-panels/
-├── bricks-floating-panels.php   # plugin header + conditional asset enqueue
+├── bricks-floating-panels.php   # plugin header, asset enqueue, settings page, updater
+├── readme.txt                   # WordPress-format readme + changelog
+├── plugin-update-checker/       # YahnisElsts library for GitHub auto-updates
 └── assets/
-    ├── floating-panels.css      # chrome styling (drag bar, controls, tabs)
+    ├── floating-panels.css      # chrome styling (drag bar, controls, tabs, handles)
     └── floating-panels.js       # all behavior
 ```
 
-## Versioning
+## Versioning & updates
 
-The version lives in two spots in `bricks-floating-panels.php` and must match:
-the header `Version:` comment and the `BFP_VERSION` constant. `BFP_VERSION` is
-the asset cache-buster, so bump it on every change or browsers serve stale JS/CSS.
+The version lives in three spots that must match: the header `Version:` comment
+and the `BFP_VERSION` constant in `bricks-floating-panels.php`, and `Stable tag`
+in `readme.txt`. `BFP_VERSION` is the asset cache-buster, so bump it on every
+change or browsers serve stale JS/CSS.
+
+Updates are delivered from GitHub releases via Plugin Update Checker (pointed at
+`BFP_GITHUB_REPO`). Tag a release matching the version and installed sites see it
+on their Plugins screen, normally within ~12 hours or instantly via "Check
+Again."
 
 `localStorage` state is migrated forward via a `STATE_V` marker in the JS; bump
 it when you need to reset users' saved positions.
@@ -81,5 +118,9 @@ it when you need to reset users' saved positions.
   A future AT update could require retuning.
 - Everything is keyed to Bricks element IDs (`#bricks-panel`,
   `#bricks-structure`, `#bricks-toolbar`, `#bricks-builder-iframe`,
+  `#bricks-builder-iframe-wrapper`, `#bricks-preview`,
   `#bricks-panel-element-quick-access`). If a Bricks update renames one, update
   the corresponding reference.
+- Side-docking's space reservation pads `#bricks-preview` and caps the canvas
+  wrapper; it depends on Bricks' centered-canvas layout, so it's the most
+  experimental of the beta add-ons.

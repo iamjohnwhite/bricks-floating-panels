@@ -24,9 +24,12 @@
 	var STATE_V = 160;
 
 	var PANELS = [
-		{ id: 'bricks-panel', key: 'settings', label: 'Settings',
+		// overflow: how the floating panel scrolls. Settings has its own inner
+		// scroll area (hidden avoids a double scrollbar); Structure does not, so it
+		// scrolls at the panel level (auto).
+		{ id: 'bricks-panel', key: 'settings', label: 'Settings', overflow: 'hidden',
 		  defaults: { left: 14, top: 58, width: 320, height: 600 } },
-		{ id: 'bricks-structure', key: 'structure', label: 'Structure',
+		{ id: 'bricks-structure', key: 'structure', label: 'Structure', overflow: 'auto',
 		  defaults: { right: 72, top: 58, width: 320, height: 600 } }
 	];
 
@@ -230,7 +233,7 @@
 			css += '#' + p.id + '{position:fixed!important;left:' + g.left + 'px!important;top:' + g.top +
 				'px!important;width:' + g.width + 'px!important;height:' + g.height +
 				'px!important;right:auto!important;bottom:auto!important;margin:0!important;' +
-				'z-index:' + zFor(p) + '!important;max-height:none!important;overflow:hidden!important;' +
+				'z-index:' + zFor(p) + '!important;max-height:none!important;overflow:' + (p.overflow || 'hidden') + '!important;' +
 				'resize:none!important;' +
 				'border-radius:8px!important;box-shadow:0 12px 44px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.4)!important;}';
 			// Kill the native browser resize grip anywhere inside the panel, and
@@ -282,14 +285,17 @@
 		if (isStacked(p)) {
 			removeChrome(el);
 			hideDockGrab(p);
+			hideHeightGrip(p);
 			return;
 		}
 		if (modeOf(p) === 'float') {
 			addChrome(el, p);
 			hideNativeResizers(p);
 			hideDockGrab(p);
+			positionHeightGrip(p);
 		} else {
 			removeChrome(el);
+			hideHeightGrip(p);
 			if (modeOf(p) === 'dock') { positionDockGrab(p); } else { hideDockGrab(p); }
 		}
 	}
@@ -345,6 +351,66 @@
 	}
 	function hideDockGrab(p) {
 		if (dockGrabs[p.id]) { dockGrabs[p.id].style.display = 'none'; }
+	}
+
+	/* ------------------------------------- height resize handle (floating) */
+
+	var heightGrips = {};
+	function ensureHeightGrip(p) {
+		var g = heightGrips[p.id];
+		if (!g) {
+			g = document.createElement('div');
+			g.className = 'bfp-vresize';
+			g.title = 'Drag to resize height';
+			g.innerHTML = '<span class="bfp-vresize-bar"></span>';
+			document.body.appendChild(g);
+			heightGrips[p.id] = g;
+			makeHeightResizable(g, p);
+		}
+		return g;
+	}
+	function positionHeightGrip(p) {
+		var g = ensureHeightGrip(p);
+		// Only while truly floating (not stacked, docked, hidden, or animating).
+		if (modeOf(p) !== 'float' || isStacked(p) || animating[p.id]) { g.style.display = 'none'; return; }
+		var d = ensureDesired(p);
+		g.style.display = 'block';
+		g.style.left = d.left + 'px';
+		g.style.top = (d.top + d.height - 5) + 'px';
+		g.style.width = d.width + 'px';
+	}
+	function hideHeightGrip(p) {
+		if (heightGrips[p.id]) { heightGrips[p.id].style.display = 'none'; }
+	}
+	function makeHeightResizable(grip, p) {
+		var startY, startH;
+		function onDown(e) {
+			if (e.button !== 0) { return; }
+			e.preventDefault();
+			e.stopPropagation();
+			startY = e.clientY;
+			startH = ensureDesired(p).height;
+			interacting = true;
+			document.body.classList.add('bfp-dragging');
+			document.addEventListener('mousemove', onMove);
+			document.addEventListener('mouseup', onUp);
+			window.addEventListener('mouseup', onUp, true);
+		}
+		function onMove(e) {
+			var d = ensureDesired(p);
+			d.height = clamp(startH + (e.clientY - startY), 200, window.innerHeight - 20);
+			renderStyles();
+			positionHeightGrip(p);
+		}
+		function onUp() {
+			interacting = false;
+			document.body.classList.remove('bfp-dragging');
+			document.removeEventListener('mousemove', onMove);
+			document.removeEventListener('mouseup', onUp);
+			window.removeEventListener('mouseup', onUp, true);
+			finalizeGeom(p);
+		}
+		grip.addEventListener('mousedown', onDown);
 	}
 
 	// Some Bricks/AT builds draw a resize handle element (not the CSS `resize`
@@ -1195,6 +1261,7 @@
 	function syncDockGrabs() {
 		PANELS.forEach(function (p) {
 			if (modeOf(p) === 'dock' && !isStacked(p)) { positionDockGrab(p); } else { hideDockGrab(p); }
+			if (modeOf(p) === 'float' && !isStacked(p)) { positionHeightGrip(p); } else { hideHeightGrip(p); }
 		});
 		updateStackTabs();
 	}

@@ -4,7 +4,7 @@ Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,11 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.5 =
+* Floating panels can now be resized in height by dragging a handle on their
+  bottom edge.
+* Fixed the Structure panel not scrolling while floating (per-panel overflow).
 
 = 2.0.4 =
 * Avoid-overlap: moved panels now sit next to each other instead of one being

@@ -285,6 +285,30 @@
 	background: rgba(229, 72, 77, 0.95);
 }
 
+/* --- Height resize handle (bottom edge of floating panels) ---------------- */
+
+.bfp-vresize {
+	display: none;
+	position: fixed;
+	z-index: 100001;
+	height: 10px;
+	cursor: ns-resize;
+}
+
+.bfp-vresize .bfp-vresize-bar {
+	position: absolute;
+	left: 50%;
+	bottom: 1px;
+	transform: translateX(-50%);
+	width: 46px;
+	height: 4px;
+	border-radius: 3px;
+	background: rgba(255, 255, 255, 0.28);
+	transition: background 0.15s ease;
+}
+
+.bfp-vresize:hover .bfp-vresize-bar { background: rgba(255, 255, 255, 0.6); }
+
 /* --- Tear-off grab tab (shown on docked panels) --------------------------- */
 
 .bfp-dock-grab {
