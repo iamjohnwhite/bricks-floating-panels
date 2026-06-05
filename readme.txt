@@ -1,10 +1,10 @@
-=== BFP Bricks Floating Panels ===
+=== Floating Panels for Bricks ===
 Contributors: truemtn
 Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.7
+Stable tag: 2.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,14 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.9 =
+* Floating Structure panel now keeps its header fixed and scrolls only the inner
+  list (matching the Settings panel) instead of scrolling the whole panel.
+
+= 2.0.8 =
+* Renamed to "Floating Panels for Bricks" (display name only; the plugin folder
+  and update identity are unchanged, so this updates in place).
 
 = 2.0.7 =
 * Float drag-bar lock button now uses the same dock icon as the toolbar's

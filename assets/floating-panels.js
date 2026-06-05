@@ -29,7 +29,7 @@
 		// scrolls at the panel level (auto).
 		{ id: 'bricks-panel', key: 'settings', label: 'Settings', overflow: 'hidden',
 		  defaults: { left: 14, top: 58, width: 320, height: 600 } },
-		{ id: 'bricks-structure', key: 'structure', label: 'Structure', overflow: 'auto',
+		{ id: 'bricks-structure', key: 'structure', label: 'Structure', overflow: 'hidden',
 		  defaults: { right: 72, top: 58, width: 320, height: 600 } }
 	];
 
@@ -265,6 +265,12 @@
 				css += '#' + QUICK_ACCESS_ID + ' > *{margin-top:0!important;}';
 				css += '#' + QUICK_ACCESS_ID + ' .toggle{display:none!important;}';
 				css += '#bricks-panel-element{margin-left:' + qaW + 'px!important;}';
+			}
+			// Structure panel (floating/stacked): keep its header fixed and scroll
+			// only the inner list, matching the Settings panel's behavior.
+			if (p.id === 'bricks-structure' && !g.hidden && (mode === 'float' || isStacked(p))) {
+				css += '#bricks-structure{display:flex!important;flex-direction:column!important;}';
+				css += '#bricks-structure .panel-content{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;}';
 			}
 			if (mode === 'hidden' || g.hidden) { css += '#' + p.id + '{display:none!important;}'; }
 		});

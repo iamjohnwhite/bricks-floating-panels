@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:       BFP Bricks Floating Panels
+ * Plugin Name:       Floating Panels for Bricks
  * Plugin URI:        https://iamjohnwhite.com
  * Description:        Turns the Bricks builder Settings panel and Structure panel into draggable, resizable floating overlays so they stop squeezing the canvas. Toggle on/off from the toolbar button or with Cmd/Ctrl + Shift + F.
- * Version:           2.0.7
+ * Version:           2.0.9
  * Author:            John White
  * Author URI:        https://iamjohnwhite.com
  * License:           GPL-2.0-or-later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'BFP_VERSION', '2.0.7' );
+define( 'BFP_VERSION', '2.0.9' );
 define( 'BFP_URL', plugin_dir_url( __FILE__ ) );
 define( 'BFP_PATH', plugin_dir_path( __FILE__ ) );
 
@@ -170,7 +170,7 @@ function bfp_render_settings_page() {
 	$o = bfp_get_options();
 	?>
 	<div class="wrap">
-		<h1>BFP Bricks Floating Panels</h1>
+		<h1>Floating Panels for Bricks</h1>
 		<div class="notice notice-warning inline" style="margin:14px 0;padding:10px 12px;">
 			<p style="margin:0;"><strong>Beta features.</strong> The options below are still in active development and may change or have rough edges. Everything is off by default, so your core floating panels are unaffected unless you opt in.</p>
 		</div>
