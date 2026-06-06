@@ -4,7 +4,7 @@ Tags: bricks, bricks builder, page builder, ui, panels
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.11
+Stable tag: 2.0.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,11 @@ No. It only loads inside the Bricks builder interface.
 No. The builder returns to its normal docked panels.
 
 == Changelog ==
+
+= 2.0.12 =
+* Fixed Bricks' right-click context menu (Copy/Paste Styles, Insert, Wrap, etc.)
+  appearing behind a floating panel when you right-click inside it. The menu now
+  always sits on top.
 
 = 2.0.11 =
 * Code housekeeping for WordPress.org: unique function/constant/filter prefixes

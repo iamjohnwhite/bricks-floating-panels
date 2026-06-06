@@ -1122,6 +1122,31 @@
 		}
 	});
 
+	// Keep Bricks' right-click context menu above floating panels. Our panels
+	// use a climbing z-index (100000+), so when you right-click inside a floating
+	// panel (e.g. paste styles in Structure) Bricks' menu would render behind the
+	// panel. We lift any context-menu element to a z-index our panels never reach.
+	// Selector-agnostic (matches id/class containing "context"+"menu") so it keeps
+	// working if Bricks renames the node, and we re-run on each right-click since
+	// Bricks may recreate it.
+	var CTX_Z = '2147480000';
+	function liftContextMenus() {
+		var nodes = document.querySelectorAll('[id*="context"], [class*="context"]');
+		for (var i = 0; i < nodes.length; i++) {
+			var n = nodes[i];
+			var cls = n.getAttribute('class') || '';
+			if (((n.id || '') + ' ' + cls).toLowerCase().indexOf('menu') === -1) { continue; }
+			if (n.closest && n.closest('[id^="bfp-"], .bfp-panel')) { continue; }
+			n.style.setProperty('z-index', CTX_Z, 'important');
+		}
+	}
+	document.addEventListener('contextmenu', function () {
+		// Bricks positions/creates the menu after the event fires, so retry briefly.
+		requestAnimationFrame(liftContextMenus);
+		setTimeout(liftContextMenus, 0);
+		setTimeout(liftContextMenus, 60);
+	}, true);
+
 	// Click (or drag/resize) inside a floating panel raises it above the other.
 	document.addEventListener('mousedown', function (e) {
 		PANELS.forEach(function (p) {

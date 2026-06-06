@@ -3,7 +3,7 @@
  * Plugin Name:       Floating Panels for Bricks
  * Plugin URI:        https://github.com/iamjohnwhite/bricks-floating-panels
  * Description:        Turns the Bricks builder Settings panel and Structure panel into draggable, resizable floating overlays so they stop squeezing the canvas. Toggle on/off from the toolbar button or with Cmd/Ctrl + Shift + F.
- * Version:           2.0.11
+ * Version:           2.0.12
  * Author:            John White
  * Author URI:        https://iamjohnwhite.com
  * License:           GPL-2.0-or-later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'BFPANELS_VERSION', '2.0.11' );
+define( 'BFPANELS_VERSION', '2.0.12' );
 define( 'BFPANELS_URL', plugin_dir_url( __FILE__ ) );
 define( 'BFPANELS_PATH', plugin_dir_path( __FILE__ ) );
 
