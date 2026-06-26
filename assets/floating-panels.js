@@ -274,6 +274,15 @@
 			}
 			if (mode === 'hidden' || g.hidden) { css += '#' + p.id + '{display:none!important;}'; }
 		});
+		// Bricks renders modal-style layers (the Templates browser and other
+		// popups in #bricks-popup) and the top toolbar with z-indexes far below our
+		// panels' 100000+, so the panels paint over them. Lift those overlays above
+		// the front-most panel, tracking the climbing z-counter. Order: toolbar on
+		// top (its data-balloon tooltips/dropdowns drop down over everything), then
+		// the popup, then the panels — so the toolbar stays usable while a popup is
+		// open, and panels never go above TOP_MIN to cover the toolbar anyway.
+		css += '#bricks-popup{z-index:' + (zCounter + 5) + '!important;}';
+		css += '#bricks-toolbar{z-index:' + (zCounter + 9) + '!important;}';
 		// Stacking is a LOCKED dock: pad the canvas area on the stack side so the
 		// centered preview reserves a gutter, and cap the wrapper so it can't spill
 		// under the panels.
