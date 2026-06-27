@@ -274,14 +274,12 @@
 			}
 			if (mode === 'hidden' || g.hidden) { css += '#' + p.id + '{display:none!important;}'; }
 		});
-		// Bricks renders modal-style layers (the Templates browser and other
-		// popups in #bricks-popup) and the top toolbar with z-indexes far below our
-		// panels' 100000+, so the panels paint over them. Lift those overlays above
-		// the front-most panel, tracking the climbing z-counter. Order: toolbar on
-		// top (its data-balloon tooltips/dropdowns drop down over everything), then
-		// the popup, then the panels — so the toolbar stays usable while a popup is
-		// open, and panels never go above TOP_MIN to cover the toolbar anyway.
-		css += '#bricks-popup{z-index:' + (zCounter + 5) + '!important;}';
+		// Keep the Bricks top toolbar above the panels so its data-balloon tooltips
+		// and dropdowns aren't covered. Panels never go above TOP_MIN, so a higher
+		// toolbar can't hide panel content. (The Templates popup is handled
+		// separately by liftPopup(), which only elevates it WHILE OPEN — a blanket
+		// rule here would turn the always-present, transparent #bricks-popup into an
+		// invisible full-screen click-blocker when closed.)
 		css += '#bricks-toolbar{z-index:' + (zCounter + 9) + '!important;}';
 		// Stacking is a LOCKED dock: pad the canvas area on the stack side so the
 		// centered preview reserves a gutter, and cap the wrapper so it can't spill
@@ -1155,6 +1153,40 @@
 		setTimeout(liftContextMenus, 0);
 		setTimeout(liftContextMenus, 60);
 	}, true);
+
+	// Keep the Bricks popup (Templates browser, etc.) above the floating panels,
+	// but ONLY while it is actually open. #bricks-popup stays in the DOM as a
+	// transparent full-screen layer when closed, so a permanent high z-index would
+	// make it swallow every click and block all selection. We therefore elevate it
+	// only when it is genuinely visible (and thus meant to capture clicks anyway),
+	// and drop our z-index back the moment it closes.
+	var POPUP_Z = '2147470000'; // above panels (100000+), below context menus (CTX_Z)
+	function popupVisible(el) {
+		if (!el) { return false; }
+		var cs = getComputedStyle(el);
+		if (cs.display === 'none' || cs.visibility === 'hidden') { return false; }
+		if (parseFloat(cs.opacity) === 0) { return false; }
+		if (cs.pointerEvents === 'none') { return false; }
+		return el.offsetWidth > 0 && el.offsetHeight > 0;
+	}
+	function liftPopup() {
+		var el = document.getElementById('bricks-popup');
+		if (!el) { return; }
+		if (popupVisible(el)) { el.style.setProperty('z-index', POPUP_Z, 'important'); }
+		else { el.style.removeProperty('z-index'); }
+	}
+	// Bricks toggles the popup via class/style/content changes; an rAF-debounced
+	// observer keeps our elevation in sync without scanning on every mutation.
+	var popupRAF = 0;
+	var popupObserver = new MutationObserver(function () {
+		if (popupRAF) { return; }
+		popupRAF = requestAnimationFrame(function () { popupRAF = 0; liftPopup(); });
+	});
+	popupObserver.observe(document.documentElement, {
+		subtree: true, childList: true, attributes: true,
+		attributeFilter: ['class', 'style']
+	});
+	liftPopup();
 
 	// Click (or drag/resize) inside a floating panel raises it above the other.
 	document.addEventListener('mousedown', function (e) {
